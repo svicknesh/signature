@@ -2,6 +2,7 @@ package signature
 
 import (
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
@@ -29,12 +30,12 @@ func New(key interface{}) (s *Signature, err error) {
 	s = new(Signature)
 
 	// get the type of key issued
-	switch key.(type) {
+	switch k := key.(type) {
 	case *ecdsa.PrivateKey:
 		s.isPrivateKey = true
 		s.isPublicKey = true
 
-		priv := key.(*ecdsa.PrivateKey)
+		priv := k
 		s.privkey = key
 		s.pubKey = &priv.PublicKey
 
@@ -51,7 +52,7 @@ func New(key interface{}) (s *Signature, err error) {
 		s.isPrivateKey = true
 		s.isPublicKey = true
 
-		priv := key.(ecdsa.PrivateKey)
+		priv := k
 		s.privkey = &priv
 		s.pubKey = &priv.PublicKey
 
@@ -69,7 +70,7 @@ func New(key interface{}) (s *Signature, err error) {
 
 		s.pubKey = key
 
-		switch key.(*ecdsa.PublicKey).Curve.Params().Name {
+		switch k.Curve.Params().Name {
 		case "P-256":
 			s.alg = jwa.ES256
 		case "P-384":
@@ -81,7 +82,7 @@ func New(key interface{}) (s *Signature, err error) {
 	case ecdsa.PublicKey:
 		s.isPublicKey = true
 
-		pub := key.(ecdsa.PublicKey)
+		pub := k
 
 		s.pubKey = &pub
 
@@ -99,7 +100,7 @@ func New(key interface{}) (s *Signature, err error) {
 		s.isPublicKey = true
 
 		s.privkey = key
-		s.pubKey = &key.(*rsa.PrivateKey).PublicKey
+		s.pubKey = &k.PublicKey
 
 		s.alg = jwa.RS256 // default signing algorithm for RSA
 
@@ -107,7 +108,7 @@ func New(key interface{}) (s *Signature, err error) {
 		s.isPrivateKey = true
 		s.isPublicKey = true
 
-		priv := key.(rsa.PrivateKey)
+		priv := k
 		s.privkey = &priv
 		s.pubKey = &priv.PublicKey
 
@@ -123,10 +124,33 @@ func New(key interface{}) (s *Signature, err error) {
 	case rsa.PublicKey:
 		s.isPublicKey = true
 
-		pub := key.(rsa.PublicKey)
+		pub := k
 		s.pubKey = &pub
 
 		s.alg = jwa.RS256 // default signing algorithm for RSA
+
+	case ed25519.PrivateKey:
+		s.isPrivateKey = true
+		s.isPublicKey = true
+
+		s.privkey = k
+		s.pubKey = k.Public()
+
+		s.alg = jwa.EdDSA
+
+	case *ed25519.PublicKey:
+		s.pubKey = *k
+
+		s.isPublicKey = true
+
+		s.alg = jwa.EdDSA
+
+	case ed25519.PublicKey:
+		s.pubKey = k
+
+		s.isPublicKey = true
+
+		s.alg = jwa.EdDSA
 
 	default:
 		return nil, fmt.Errorf("signature new: unsupported key type %T", key)

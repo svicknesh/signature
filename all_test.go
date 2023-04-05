@@ -2,6 +2,7 @@ package signature
 
 import (
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
@@ -219,6 +220,59 @@ func TestSignatureJWK(t *testing.T) {
 	fmt.Println(string(signed))
 
 	payload, err := sigVerify.Verify(signed)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println(string(payload))
+
+}
+
+func TestSignatureED25519(t *testing.T) {
+
+	publicKey, privateKey, err := ed25519.GenerateKey(rand.Reader)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	signSig, err := New(privateKey)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	verifySig, err := New(publicKey)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	signSig.Set("iss", "issuer")
+	signSig.Set("clientId", "ed25519-randomid")
+
+	hashed := sha256.Sum256([]byte("hello world"))
+	signSig.Set("hash", hex.EncodeToString(hashed[:]))
+
+	type example struct {
+		Key   string `json:"key"`
+		Value string `json:"value"`
+	}
+
+	var e example
+	e.Key = "bingo"
+	e.Value = "book"
+
+	signSig.Set("myvalue", e)
+
+	signed, err := signSig.Generate()
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println(string(signed))
+
+	payload, err := verifySig.Verify(signed)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
