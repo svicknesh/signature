@@ -18,7 +18,7 @@ To generate a general JWT, create an instance of `Signature` and add the followi
 - `aud` - who is this token targetted to.
 ` jti` - Unique identifier of **THIS** JWT (OPTIONAL).
 
-To generaet an Oauth2 token, create an instance of `Signature` and add the following fields
+To generate an Oauth2 token, create an instance of `Signature` and add the following fields
 - Use the above JWT as the base with `iss`, `iat`, `exp`, `aud`, `sub` and `jti` being **REQUIRED**.
 - `client_id` - public identifier of the application, unique in the scope of the application using it.
 - `scope` - space separated values indicating what the permission scope of this token is.
@@ -32,7 +32,7 @@ Generating a signature requires either an `RSA`, `ECDSA` or `ED25519` private ke
 
 ```go
 
-// `RSA`, `ECDSA` or `ED25519` private key already exists
+// `RSA`, `ECDSA` or `ED25519` raw private key already exists
 sig, err := signature.New(privateKey)
 if nil != err {
     fmt.Println(err)
