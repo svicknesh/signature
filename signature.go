@@ -87,7 +87,10 @@ func (s *Signature) Generate() (signed []byte, err error) {
 		return nil, fmt.Errorf("signature generate: no private key for signing data")
 	}
 
-	bytes, _ := json.Marshal(s.data)
+	bytes, err := json.Marshal(s.data)
+	if nil != err {
+		return nil, fmt.Errorf("signature generate: marshal -> %w", err)
+	}
 
 	signed, err = jws.Sign(bytes, s.alg, s.k.PrivateKeyInstance()) // a JWS is the basis for all other types such as generic JWT, Oauth2, etc
 	if nil != err {
