@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/lestrrat-go/jwx/jwk"
 )
@@ -273,6 +274,95 @@ func TestSignatureED25519(t *testing.T) {
 	fmt.Println(string(signed))
 
 	payload, err := verifySig.Verify(signed)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println(string(payload))
+
+}
+
+func TestOauth2(t *testing.T) {
+
+	publicKey, privateKey, err := ed25519.GenerateKey(rand.Reader)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	oa, err := NewTokenOAuth2(privateKey)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	oa.SetIssuedAt(time.Now().Add(time.Hour))
+	oa.SetExpiry(time.Hour * 2)
+
+	oa.SetIssuer("memyselfi")
+	oa.SetTokenIdentifier("1234567890")
+	oa.SetAudience("coolremoteserver")
+	oa.SetSubject("iamtheissuer")
+	oa.SetClientID("thematrix")
+
+	sig, err := oa.Generate()
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println(string(sig))
+
+	s, err := New(publicKey)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	payload, err := s.Verify(sig)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println(string(payload))
+
+}
+
+func TestJWT(t *testing.T) {
+
+	publicKey, privateKey, err := ed25519.GenerateKey(rand.Reader)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	myjwt, err := NewTokenJWT(privateKey)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	myjwt.SetIssuedAt(time.Now().Add(time.Hour))
+	myjwt.SetExpiry(time.Hour * 2)
+
+	myjwt.SetIssuer("jwt-memyselfi")
+	myjwt.SetTokenIdentifier("jwt-1234567890")
+	myjwt.SetAudience("jwt-coolremoteserver")
+	myjwt.SetSubject("jwt-iamtheissuer")
+
+	sig, err := myjwt.Generate()
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println(string(sig))
+
+	s, err := New(publicKey)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	payload, err := s.Verify(sig)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)

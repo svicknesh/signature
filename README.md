@@ -92,6 +92,91 @@ fmt.Println(string(payload))
 ```
 
 
+
+### Generating JWT
+
+```go
+// `RSA`, `ECDSA` or `ED25519` keys already exists
+myjwt, err := NewTokenJWT(privateKey)
+if nil != err {
+    fmt.Println(err)
+    os.Exit(1)
+}
+
+myjwt.SetIssuedAt(time.Now().Add(time.Hour))
+myjwt.SetExpiry(time.Hour * 2)
+
+myjwt.SetIssuer("jwt-memyselfi")
+myjwt.SetTokenIdentifier("jwt-1234567890")
+myjwt.SetAudience("jwt-coolremoteserver")
+myjwt.SetSubject("jwt-iamtheissuer")
+
+sig, err := myjwt.Generate()
+if nil != err {
+    fmt.Println(err)
+    os.Exit(1)
+}
+fmt.Println(string(sig))
+
+s, err := New(publicKey)
+if nil != err {
+    fmt.Println(err)
+    os.Exit(1)
+}
+
+payload, err := s.Verify(sig)
+if nil != err {
+    fmt.Println(err)
+    os.Exit(1)
+}
+fmt.Println(string(payload))
+
+```
+
+
+### Generating Oauth2
+
+```go
+// `RSA`, `ECDSA` or `ED25519` keys already exists
+
+oa, err := NewTokenOAuth2(privateKey)
+if nil != err {
+    fmt.Println(err)
+    os.Exit(1)
+}
+
+oa.SetIssuedAt(time.Now().Add(time.Hour))
+oa.SetExpiry(time.Hour * 2)
+
+oa.SetIssuer("memyselfi")
+oa.SetTokenIdentifier("1234567890")
+oa.SetAudience("coolremoteserver")
+oa.SetSubject("iamtheissuer")
+oa.SetClientID("thematrix")
+
+sig, err := oa.Generate()
+if nil != err {
+    fmt.Println(err)
+    os.Exit(1)
+}
+fmt.Println(string(sig))
+
+s, err := New(publicKey)
+if nil != err {
+    fmt.Println(err)
+    os.Exit(1)
+}
+
+payload, err := s.Verify(sig)
+if nil != err {
+    fmt.Println(err)
+    os.Exit(1)
+}
+fmt.Println(string(payload))
+
+```
+
+
 ### Reading PEM encoded public/private keys into `Signature` instance
 
 Helper function to read a public/private key encoded in PEM format into `Signature` instance. Supports both PKCS#1 or PKCS#8 format
