@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/lestrrat-go/jwx/jwa"
-	"github.com/lestrrat-go/jwx/jws"
+	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/svicknesh/key/v2"
 	"github.com/svicknesh/key/v2/shared"
 )
@@ -92,7 +92,7 @@ func (s *Signature) Generate() (signed []byte, err error) {
 		return nil, fmt.Errorf("signature generate: marshal -> %w", err)
 	}
 
-	signed, err = jws.Sign(bytes, s.alg, s.k.PrivateKeyInstance()) // a JWS is the basis for all other types such as generic JWT, Oauth2, etc
+	signed, err = jws.Sign(bytes, jws.WithKey(s.alg, s.k.PrivateKeyInstance())) // a JWS is the basis for all other types such as generic JWT, Oauth2, etc
 	if nil != err {
 		return nil, fmt.Errorf("signature generate: %w", err)
 	}
@@ -107,7 +107,7 @@ func (s *Signature) Verify(signed []byte) (payload []byte, err error) {
 		return nil, fmt.Errorf("signature generate: no public key for verifying data")
 	}
 
-	payload, err = jws.Verify(signed, s.alg, s.k.PublicKeyInstance()) // we just need to know if the signature is valid, payload checking will be done by the calling app
+	payload, err = jws.Verify(signed, jws.WithKey(s.alg, s.k.PublicKeyInstance())) // we just need to know if the signature is valid, payload checking will be done by the calling app
 
 	return
 }

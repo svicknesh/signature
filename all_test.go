@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/lestrrat-go/jwx/v2/jwk"
 )
 
 func TestSignatureEC(t *testing.T) {
@@ -181,13 +181,13 @@ func TestSignatureJWK(t *testing.T) {
 
 	publicKey := privateKey.PublicKey
 
-	jwkPriv, err := jwk.New(privateKey)
+	jwkPriv, err := jwk.FromRaw(privateKey)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	jwkPub, err := jwk.New(publicKey)
+	jwkPub, err := jwk.FromRaw(publicKey)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
