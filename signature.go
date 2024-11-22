@@ -38,7 +38,8 @@ type Signature struct {
 	k   Key
 	alg jwa.SignatureAlgorithm
 	//token   jwt.Token
-	data map[string]interface{}
+	data  map[string]any
+	input any
 }
 
 /*
@@ -78,7 +79,7 @@ func New(keyBytes []byte) (s *Signature, err error) {
 
 // initData - initializes the map for storing type/value pairs
 func (s *Signature) initData() {
-	s.data = make(map[string]interface{})
+	s.data = make(map[string]any)
 }
 
 // setAlg - sets the keys signing algorithm
@@ -102,8 +103,14 @@ func (s *Signature) setAlg() {
 }
 
 // Set - sets a type/value pair for signing
-func (s *Signature) Set(t string, value interface{}) {
+func (s *Signature) Set(t string, value any) {
 	s.data[t] = value
+	s.SetData(s.data) // always update the input data with what the user provides
+}
+
+// SetData - sets bulk data for signing
+func (s *Signature) SetData(input any) {
+	s.input = input
 }
 
 // Generate - generates a signature
@@ -113,7 +120,7 @@ func (s *Signature) Generate() (signed []byte, err error) {
 		return nil, fmt.Errorf("signature generate: no private key for signing data")
 	}
 
-	bytes, err := json.Marshal(s.data)
+	bytes, err := json.Marshal(s.input)
 	if nil != err {
 		return nil, fmt.Errorf("signature generate: marshal -> %w", err)
 	}
