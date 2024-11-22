@@ -15,7 +15,7 @@ func NewTokenOAuth2(rawkey interface{}) (tokenOAuth2 *TokenOAuth2, err error) {
 
 	tokenOAuth2 = new(TokenOAuth2)
 
-	tokenOAuth2.s, err = New(rawkey)
+	tokenOAuth2.s, err = FromRaw(rawkey)
 	if nil != err {
 		return nil, fmt.Errorf("newtokenoauth2: error creating signature -> %w", err)
 	}

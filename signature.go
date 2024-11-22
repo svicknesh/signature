@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/lestrrat-go/jwx/v2/jwa"
-	"github.com/lestrrat-go/jwx/v2/jws"
-	"github.com/svicknesh/key/v2"
+	"github.com/lestrrat-go/jwx/v3/jwa"
+	"github.com/lestrrat-go/jwx/v3/jws"
 	"github.com/svicknesh/key/v2/shared"
 )
 
@@ -42,31 +41,32 @@ type Signature struct {
 	data map[string]interface{}
 }
 
+/*
 // New - creates new instance of signature for generation or verification
-func New(rawkey interface{}) (s *Signature, err error) {
+func New(keyBytes []byte) (s *Signature, err error) {
 
 	s = new(Signature)
 
 	s.k, err = key.NewFromRawKey(rawkey)
 	if nil != err {
-		return nil, fmt.Errorf("new signature: error parsing raw key %w", err)
+		return nil, fmt.Errorf("new signature: error parsing raw key -> %w", err)
 	}
 
 	switch s.k.KeyType() {
 	case shared.ECDSA256:
-		s.alg = jwa.ES256
+		s.alg = jwa.ES256()
 	case shared.ECDSA384:
-		s.alg = jwa.ES384
+		s.alg = jwa.ES384()
 	case shared.ECDSA521:
-		s.alg = jwa.ES512
+		s.alg = jwa.ES512()
 	case shared.ED25519:
-		s.alg = jwa.EdDSA
+		s.alg = jwa.EdDSA()
 	case shared.RSA2048:
-		s.alg = jwa.RS256
+		s.alg = jwa.RS256()
 	case shared.RSA4096:
-		s.alg = jwa.RS384
+		s.alg = jwa.RS384()
 	case shared.RSA8192:
-		s.alg = jwa.RS512
+		s.alg = jwa.RS512()
 	}
 
 	//s.token = jwt.New()
@@ -74,10 +74,36 @@ func New(rawkey interface{}) (s *Signature, err error) {
 
 	return
 }
+*/
 
-// Set - sets a key for signing
-func (s *Signature) Set(key string, value interface{}) {
-	s.data[key] = value
+// initData - initializes the map for storing type/value pairs
+func (s *Signature) initData() {
+	s.data = make(map[string]interface{})
+}
+
+// setAlg - sets the keys signing algorithm
+func (s *Signature) setAlg() {
+	switch s.k.KeyType() {
+	case shared.ECDSA256:
+		s.alg = jwa.ES256()
+	case shared.ECDSA384:
+		s.alg = jwa.ES384()
+	case shared.ECDSA521:
+		s.alg = jwa.ES512()
+	case shared.ED25519:
+		s.alg = jwa.EdDSA()
+	case shared.RSA2048:
+		s.alg = jwa.RS256()
+	case shared.RSA4096:
+		s.alg = jwa.RS384()
+	case shared.RSA8192:
+		s.alg = jwa.RS512()
+	}
+}
+
+// Set - sets a type/value pair for signing
+func (s *Signature) Set(t string, value interface{}) {
+	s.data[t] = value
 }
 
 // Generate - generates a signature

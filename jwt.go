@@ -15,7 +15,7 @@ func NewTokenJWT(rawkey interface{}) (tokenJWT *TokenJWT, err error) {
 
 	tokenJWT = new(TokenJWT)
 
-	tokenJWT.s, err = New(rawkey)
+	tokenJWT.s, err = FromRaw(rawkey)
 	if nil != err {
 		return nil, fmt.Errorf("newtokenoauth2: error creating signature -> %w", err)
 	}

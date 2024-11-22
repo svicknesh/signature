@@ -33,7 +33,7 @@ Generating a signature requires either an `RSA`, `ECDSA` or `ED25519` private ke
 ```go
 
 // `RSA`, `ECDSA` or `ED25519` raw private key already exists
-sig, err := signature.New(privateKey)
+sig, err := signature.FromRaw(privateKey)
 if nil != err {
     fmt.Println(err)
     os.Exit(1)
@@ -73,9 +73,9 @@ Generating a signature requires either an `RSA`, `ECDSA` or `ED25519` public key
 
 ```go
 
-// `RSA`, `ECDSA` or `ED25519` public key already exists
+// `RSA`, `ECDSA` or `ED25519` raw public key already exists
 
-sig, err := signature.New(publicKey)
+sig, err := signature.FromRaw(publicKey)
 if nil != err {
     fmt.Println(err)
     os.Exit(1)
@@ -97,7 +97,7 @@ fmt.Println(string(payload))
 
 ```go
 // `RSA`, `ECDSA` or `ED25519` keys already exists
-myjwt, err := NewTokenJWT(privateKey)
+myjwt, err := signature.NewTokenJWT(privateKey)
 if nil != err {
     fmt.Println(err)
     os.Exit(1)
@@ -139,7 +139,7 @@ fmt.Println(string(payload))
 ```go
 // `RSA`, `ECDSA` or `ED25519` keys already exists
 
-oa, err := NewTokenOAuth2(privateKey)
+oa, err := signature.NewTokenOAuth2(privateKey)
 if nil != err {
     fmt.Println(err)
     os.Exit(1)
@@ -177,24 +177,6 @@ fmt.Println(string(payload))
 ```
 
 
-### Reading PEM encoded public/private keys into `Signature` instance
-
-Helper function to read a public/private key encoded in PEM format into `Signature` instance. Supports both PKCS#1 or PKCS#8 format
-
-```go
-
-// keyBytes are the bytes of PEM contents
-sig, err := signature.ParsePEM(keyBytes, nil)
-if nil != err {
-    fmt.Println(err)
-    os.Exit(1)
-}
-
-// returns an instance of Signature for use in the application
-
-```
-
-
 ### Reading JWK JSON encoded public/private keys into `Signature` instance
 
 Helper function to read a public/private key encoded in JWK JSON string format into `Signature` instance.
@@ -202,7 +184,7 @@ Helper function to read a public/private key encoded in JWK JSON string format i
 ```go
 
 // keyBytes are the bytes of the JSON string
-key, err := signature.ParseJWK(keyBytes, nil)
+signSig, err := signature.FromJWK(keyBytes, nil)
 if nil != err {
     fmt.Println(err)
     os.Exit(1)

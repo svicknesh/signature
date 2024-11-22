@@ -1,28 +1,63 @@
 package signature
 
 import (
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 
-	"github.com/lestrrat-go/jwx/v2/jwk"
+	"github.com/svicknesh/key/v2"
 )
 
-// ParsePEM - parses PEM encoded bytes into a key
+// FromRaw - parses raw key into signature key
+func FromRaw(raw interface{}) (s *Signature, err error) {
+
+	s = new(Signature)
+
+	s.k, err = key.NewFromRawKey(raw)
+	if nil != err {
+		return nil, fmt.Errorf("parseRaw: error parsing raw key -> %w", err)
+	}
+	//fmt.Println(s.k.String())
+
+	s.setAlg()   // sets the signing algorithm
+	s.initData() // inits the map for storing type/value pairs
+
+	return
+}
+
+// FromJWK - parses JWK JSON encoded bytes into signature key
+func FromJWK(jsonBytes []byte) (s *Signature, err error) {
+
+	s = new(Signature)
+
+	s.k, err = key.NewKeyFromBytes(jsonBytes)
+	if nil != err {
+		return nil, fmt.Errorf("parseJWK: error parsing JWK -> %w", err)
+	}
+	//fmt.Println(s.k.String())
+
+	s.setAlg()   // sets the signing algorithm
+	s.initData() // inits the map for storing type/value pairs
+
+	/*
+		var raw interface{}
+		if j.IsPrivateKey() {
+			raw = j.PrivateKeyInstance()
+		} else if j.IsPublicKey() {
+			raw = j.PublicKeyInstance()
+		} else {
+			return nil, fmt.Errorf("parseJWK: JWK is neither a public nor private key")
+		}
+	*/
+
+	return
+}
+
+/*
+// ParsePEM - parses PEM encoded bytes into signature key
 func ParsePEM(pemBytes, password []byte) (signature *Signature, err error) {
 
 	var key interface{}
 	p, _ := pem.Decode(pemBytes) // for private key there should be no next
-
-	var keyBytes []byte
-	if x509.IsEncryptedPEMBlock(p) {
-		keyBytes, err = x509.DecryptPEMBlock(p, password)
-		if nil != err {
-			return nil, fmt.Errorf("parsePEM: %s", err)
-		}
-	} else {
-		keyBytes = p.Bytes
-	}
+	keyBytes := p.Bytes          // decrypting PEM is no longer supported
 
 	// identify key type to do proper decoding
 	switch p.Type {
@@ -52,37 +87,4 @@ func ParsePEM(pemBytes, password []byte) (signature *Signature, err error) {
 
 	return New(key) // return new instance of Signature
 }
-
-// ParseJWK - parses JWK JSON encoded bytes into a key
-func ParseJWK(jsonBytes []byte) (signature *Signature, err error) {
-
-	var key interface{}
-
-	j, err := jwk.ParseKey(jsonBytes)
-	if err != nil {
-		return nil, fmt.Errorf("parseJWK: %w", err)
-	}
-
-	if err = j.Raw(&key); err != nil {
-		return nil, fmt.Errorf("parseJWK: %w", err)
-	}
-
-	// by default we only have 1 set of key so we don't have to loop
-	/*
-		set, err := jwk.Parse(jsonBytes)
-		if err != nil {
-			return nil, fmt.Errorf("parseJWK: %s", err)
-		}
-
-		for it := set.Iterate(context.Background()); it.Next(context.Background()); {
-			pair := it.Pair()
-			k := pair.Value.(jwk.Key)
-
-			if err = k.Raw(&key); err != nil {
-				return nil, fmt.Errorf("parseJWK: %s", err)
-			}
-		}
-	*/
-
-	return New(key) // return new instance of Signature
-}
+*/

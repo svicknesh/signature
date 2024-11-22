@@ -1,37 +1,58 @@
-package signature
+package signature_test
 
 import (
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/sha256"
-	"crypto/x509"
 	"encoding/hex"
-	"encoding/json"
-	"encoding/pem"
 	"fmt"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/lestrrat-go/jwx/v2/jwk"
+	"github.com/svicknesh/key/v2"
+	"github.com/svicknesh/signature"
 )
 
 func TestSignatureEC(t *testing.T) {
 
-	privateKey, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+	//privateKey, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	//pubKey := privateKey.PublicKey
+	//p := *privateKey
 
-	p := *privateKey
-	signSig, err := New(p)
+	k, err := key.GenerateKey(key.ECDSA384)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	verifySig, err := New(&privateKey.PublicKey)
+	privKeyBytes, err := k.Bytes()
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	signSig, err := signature.FromJWK(privKeyBytes)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	pubkey, err := k.PublicKey()
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	pubKeyBytes, err := pubkey.Bytes()
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	verifySig, err := signature.FromJWK(pubKeyBytes)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
@@ -72,26 +93,47 @@ func TestSignatureEC(t *testing.T) {
 
 func TestSignatureRSA(t *testing.T) {
 
-	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
-	//pubKey := privateKey.PublicKey
-
-	p := *privateKey
-	sigSign, err := New(p)
+	k, err := key.GenerateKey(key.RSA2048)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	sigVerify, err := New(&privateKey.PublicKey)
+	privKeyBytes, err := k.Bytes()
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	sigSign.Set("iss", "issuer")
-	sigSign.Set("clientId", "randomid")
+
+	signSig, err := signature.FromJWK(privKeyBytes)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	pubkey, err := k.PublicKey()
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	pubKeyBytes, err := pubkey.Bytes()
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	verifySig, err := signature.FromJWK(pubKeyBytes)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	signSig.Set("iss", "issuer")
+	signSig.Set("clientId", "randomid")
 
 	hashed := sha256.Sum256([]byte("hello world"))
-	sigSign.Set("hash", hex.EncodeToString(hashed[:]))
+	signSig.Set("hash", hex.EncodeToString(hashed[:]))
 
 	type example struct {
 		Key   string `json:"key"`
@@ -102,16 +144,16 @@ func TestSignatureRSA(t *testing.T) {
 	e.Key = "bingo"
 	e.Value = "book"
 
-	sigSign.Set("myvalue", e)
+	signSig.Set("myvalue", e)
 
-	signed, err := sigSign.Generate()
+	signed, err := signSig.Generate()
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	fmt.Println(string(signed))
 
-	payload, err := sigVerify.Verify(signed)
+	payload, err := verifySig.Verify(signed)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
@@ -120,6 +162,7 @@ func TestSignatureRSA(t *testing.T) {
 
 }
 
+/*
 func TestSignaturePEM(t *testing.T) {
 
 	// EC key
@@ -141,28 +184,28 @@ func TestSignaturePEM(t *testing.T) {
 	fmt.Println(string(pemBytesPrivate))
 	fmt.Println(string(pemBytesPublic))
 
-	sigSign, err := ParsePEM(pemBytesPrivate, nil)
+	signSig, err := signature.ParsePEM(pemBytesPrivate, nil)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	sigVerify, err := ParsePEM(pemBytesPublic, nil)
+	verifySig, err := signature.ParsePEM(pemBytesPublic, nil)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	sigSign.Set("iss", "issuer")
+	signSig.Set("iss", "issuer")
 
-	signed, err := sigSign.Generate()
+	signed, err := signSig.Generate()
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	fmt.Println(string(signed))
 
-	payload, err := sigVerify.Verify(signed)
+	payload, err := verifySig.Verify(signed)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
@@ -170,57 +213,56 @@ func TestSignaturePEM(t *testing.T) {
 	fmt.Println(string(payload))
 
 }
+*/
 
 func TestSignatureJWK(t *testing.T) {
 
 	// RSA key
-	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	//privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
 
 	// EC key
-	//privateKey, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-
+	privateKey, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	publicKey := privateKey.PublicKey
 
-	jwkPriv, err := jwk.FromRaw(privateKey)
+	jwkPriv, err := key.NewFromRawKey(privateKey)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	jwkPrivBytes, _ := jwkPriv.Bytes()
+	fmt.Println(string(jwkPrivBytes))
+
+	jwkPub, err := key.NewFromRawKey(publicKey)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	jwkPubBytes, _ := jwkPub.Bytes()
+	fmt.Println(string(jwkPubBytes))
+
+	signSig, err := signature.FromJWK(jwkPrivBytes)
+	if nil != err {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	//fmt.Println(signSig)
+
+	verifySig, err := signature.FromJWK(jwkPubBytes)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	jwkPub, err := jwk.FromRaw(publicKey)
-	if nil != err {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	signSig.Set("iss", "issuer")
 
-	jwkPrivBytes, _ := json.Marshal(jwkPriv)
-	//fmt.Println(string(jwkPrivBytes))
-
-	jwkPubBytes, _ := json.Marshal(jwkPub)
-	//fmt.Println(string(jwkPubBytes))
-
-	sigSign, err := ParseJWK(jwkPrivBytes)
-	if nil != err {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	sigVerify, err := ParseJWK(jwkPubBytes)
-	if nil != err {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	sigSign.Set("iss", "issuer")
-
-	signed, err := sigSign.Generate()
+	signed, err := signSig.Generate()
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	fmt.Println(string(signed))
 
-	payload, err := sigVerify.Verify(signed)
+	payload, err := verifySig.Verify(signed)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
@@ -237,13 +279,13 @@ func TestSignatureED25519(t *testing.T) {
 		os.Exit(1)
 	}
 
-	signSig, err := New(privateKey)
+	signSig, err := signature.FromRaw(privateKey)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	verifySig, err := New(publicKey)
+	verifySig, err := signature.FromRaw(publicKey)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
@@ -290,7 +332,7 @@ func TestOauth2(t *testing.T) {
 		os.Exit(1)
 	}
 
-	oa, err := NewTokenOAuth2(privateKey)
+	oa, err := signature.NewTokenOAuth2(privateKey)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
@@ -312,7 +354,7 @@ func TestOauth2(t *testing.T) {
 	}
 	fmt.Println(string(sig))
 
-	s, err := New(publicKey)
+	s, err := signature.FromRaw(publicKey)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
@@ -335,7 +377,7 @@ func TestJWT(t *testing.T) {
 		os.Exit(1)
 	}
 
-	myjwt, err := NewTokenJWT(privateKey)
+	myjwt, err := signature.NewTokenJWT(privateKey)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
@@ -356,7 +398,7 @@ func TestJWT(t *testing.T) {
 	}
 	fmt.Println(string(sig))
 
-	s, err := New(publicKey)
+	s, err := signature.FromRaw(publicKey)
 	if nil != err {
 		fmt.Println(err)
 		os.Exit(1)
